@@ -1,0 +1,11 @@
+Scan data of a dragon sculpture constructed from wood pulp resin. Approx. 20cm x 8cm x 9cm. 
+Source: XYZ RGB Inc.
+Scanner: XYZ RGB
+Number of scans: 18
+Scan Resolution: 100 um
+Total size of scans: 6,300,000 points (about 12,600,000 triangles)
+Size of merged model: 3,609,455 vertices, 7,218,906 triangles
+Comments: watertight & uncompressed
+
+Additional Processing:
+dragon_sparse.pcd: Processed from PLY to PCD, then subsequently sparsified using radius outlier removal (dragon_sparse.pcd)
