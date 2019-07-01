@@ -1279,7 +1279,7 @@ void cloud_cb (const pcl::PCLPointCloud2ConstPtr& cloud)
 [go to top](#top)
 
 
-There's a lot more configuration options than what I'll go through here, but for the full suite, check out [<http://pointclouds.org/documentation/tutorials/pcl_visualizer.php#pcl-visualizer>](the tutorial for PCLVisualizer).
+There's a lot more configuration options than what I'll go through here, but for the full suite, check out [(the tutorial for PCLVisualizer](<http://pointclouds.org/documentation/tutorials/pcl_visualizer.php#pcl-visualizer>).
 
 **Visualise a Single Point Cloud**
 
