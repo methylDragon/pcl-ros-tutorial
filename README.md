@@ -3,7 +3,11 @@
 
 ![CylinderSegmentation.gif](assets/CylinderSegmentationFast.gif)
 
-![[resize output image]](assets/ezgif-3-0b2b7a5b11ed.gif)
+![1561461023329](assets/1561461023329.png)
+
+![1561451395155](assets/1561451395155.png)
+
+[Image Source](<http://pointclouds.org/>)
 
 > The **Point Cloud Library** (or **PCL**) is a **large scale, open project [1]** for 2D/3D image and point cloud processing. The PCL framework contains numerous state-of-the art algorithms including filtering, feature estimation, surface reconstruction, registration, model fitting and segmentation. These algorithms can be used, for example, to filter outliers from noisy data, stitch 3D point clouds together, segment relevant parts of a scene, extract keypoints and compute descriptors to recognize objects in the world based on their geometric appearance, and create surfaces from point clouds and visualize them -- to name a few.
 >
@@ -27,7 +31,7 @@ This should be enough to get started and have a fair grounding in PCL before jum
 
 ### Pre-Requisite Knowledge:
 
-- Make sure you're caught up on [ROS](https://github.com/methylDragon/coding-notes/tree/master/Robot Operating System (ROS)/ROS) and [C++](https://github.com/methylDragon/coding-notes/tree/master/C++)
+- Make sure you're caught up on [ROS](<https://github.com/methylDragon/coding-notes/tree/master/Robot Operating System (ROS)/ROS>) and [C++](<https://github.com/methylDragon/coding-notes/tree/master/C++>)
 - And, if you need ROS, you definitely need [Linux](<https://github.com/methylDragon/linux-reference>)
 
 
