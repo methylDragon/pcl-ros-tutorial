@@ -19,4 +19,4 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 add_executable(minimal_pub_sub src/minimal_pub_sub.cpp)
-target_link_libraries(pcl_fuse ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(minimal_pub_sub ${catkin_LIBRARIES} ${PCL_LIBRARIES})
