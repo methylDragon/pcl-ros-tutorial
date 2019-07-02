@@ -1570,15 +1570,20 @@ All the following class methods are written within the CylinderSegment class def
 #### **ROS Cloud Callback Function**
 
 ```c++
-  void cloudCB(const pcl::PCLPointCloud2ConstPtr& cloud)
+  void cloudCB(const sensor_msgs::PointCloud2ConstPtr& input)
   {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::fromROSMsg(*input, *cloud);
+
     // Run Pass Through Filter
     passThroughFilter(cloud);
 
     // Find Normals
     pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
     computeNormals(cloud, cloud_normals);
-      
+
+    pcl::PointIndices::Ptr inliers_plane(new pcl::PointIndices);
+
     // Remove Plane Surface
     removePlaneSurface(cloud, inliers_plane);
     
