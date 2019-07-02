@@ -1,0 +1,49 @@
+gazebo_ros_control:
+  pid_gains:
+    joint_tire_right: {p: 50.0, i: 1.0, d: 0.5}
+    joint_tire_left: {p: 50.0, i: 1.0, d: 0.5}
+
+sesto_joint_publisher:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+sesto_velocity_controller:
+  type: diff_drive_controller/DiffDriveController
+  left_wheel: 'joint_tire_left'
+  right_wheel: 'joint_tire_right'
+  publish_rate: 50
+  pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 0.03]
+  twist_covariance_diagonal: [0.001, 0.001, 0.001, 1000000.0, 1000000.0, 0.03]
+  cmd_vel_timeout: 0.25
+
+  k_l: 0.1
+  k_r: 0.1
+
+  # Odometry fused with IMU is published by robot_localization, so
+  # no need to publish a TF based on encoders alone.
+  enable_odom_tf: false
+  base_frame_id: $(arg robot_name)/base_link
+
+  # Wheel separation and radius multipliers
+  wheel_separation: 0.52
+  wheel_separation_multiplier: 1.0 # default: 1.0
+
+  wheel_radius: 0.1045
+  wheel_radius_multiplier    : 1.0 # default: 1.0
+
+  # Velocity and acceleration limits
+  # Whenever a min_* is unspecified, default to -max_*
+  linear:
+    x:
+      has_velocity_limits    : true
+      max_velocity           : 2.0   # m/s
+      has_acceleration_limits: true
+      max_acceleration       : 20.0   # m/s^2
+  angular:
+    z:
+      has_velocity_limits    : true
+      max_velocity           : 4.0   # rad/s
+      has_acceleration_limits: true
+      max_acceleration       : 25.0   # rad/s^2
+
+

@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+    <remap from="cloud_in" to="camera/depth/points" />
+    <param name="resolution" value="0.01" />
+    <param name="frame_id" type="string" value="camera_link" />
+    <param name="sensor_model/max_range" value="5.0" />
+  </node>
+
+  <!-- RViz -->
+  <node type="rviz" name="pcl_rviz" pkg="rviz" args="-d $(find pcl_tester)/rviz/octomap.rviz"/>
+</launch>

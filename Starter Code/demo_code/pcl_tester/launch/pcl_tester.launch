@@ -1,0 +1,48 @@
+<launch>
+  <!-- Load URDF -->
+  <param
+    name="robot_description"
+    command="$(find xacro)/xacro --inorder $(find pcl_tester_description)/urdf/depth_camera.urdf.xacro"/>
+
+  <!-- Start Gazebo -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" default="$(find pcl_tester)/worlds/pcl_tester.world"/>
+  </include>
+
+  <!-- Spawn Camera into Gazebo -->
+  <node
+    name="camera_urdf_spawner"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-param robot_description -urdf -model camera -z 0.25"/>
+
+  <!-- Static transform publishers -->
+  <node
+    pkg="tf2_ros"
+    type="static_transform_publisher" 
+    name="camera_transform_publisher"
+    args="0 0 0 0 0 0 1 world camera_link"/>
+
+  <node
+    pkg="tf2_ros"
+    type="static_transform_publisher" 
+    name="camera_image_transform_publisher"
+    args="0 0 0 -0.5 -0.5 0.5 0.5 camera_link camera_image_link"/>
+
+  <!-- RViz -->
+  <node type="rviz" name="pcl_rviz" pkg="rviz" args="-d $(find pcl_tester)/rviz/pcl_tester.rviz"/>
+
+
+  <!-- Spawn some junk -->
+  <param name="box_description" command="$(find xacro)/xacro.py $(find pcl_tester)/objects/simple_box.urdf" />
+  <param name="cylinder_description" command="$(find xacro)/xacro.py $(find pcl_tester)/objects/simple_cylinder.urdf" />
+
+  <node name="spawn_box_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param box_description -x 2.23 -y -0.12 -z .2 -model box_model_1" respawn="false"/>
+  <node name="spawn_box_2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param box_description -x 0.84 -y -0.4 -z .2 -model box_model_2" respawn="false"/>
+  <node name="spawn_box_3" pkg="gazebo_ros" type="spawn_model" args="-urdf -param box_description -x 1.0 -y 0.53 -Y 4 -z .2 -model box_model_3" respawn="false"/>
+  <node name="spawn_box_4" pkg="gazebo_ros" type="spawn_model" args="-urdf -param box_description -x 1.571 -y 0.43 -Y 2 -R 3.14 -z .2 -model box_model_4" respawn="false"/>
+
+  <node name="spawn_cylinder_1" pkg="gazebo_ros" type="spawn_model" args="-urdf -param cylinder_description -x 1.38 -y 0.35 -z .25 -model cylinder_model_1" respawn="false"/>
+  <node name="spawn_cylinder_2" pkg="gazebo_ros" type="spawn_model" args="-urdf -param cylinder_description -x 1.48 -y -0.243 -z .25 -model cylinder_model_2" respawn="false"/>
+  <node name="spawn_cylinder_3" pkg="gazebo_ros" type="spawn_model" args="-urdf -param cylinder_description -x 1.571 -y 0.43 -z .6 -model cylinder_model_3" respawn="false"/>
+</launch>

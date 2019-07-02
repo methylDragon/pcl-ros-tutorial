@@ -1,0 +1,19 @@
+<package format="2">
+  <name>pcl_tester_description</name>
+  <version>1.0.0</version>
+  <description>Throwaway descriptor to test depth cameras for PCL integration</description>
+  <license>MIT</license>
+  <maintainer email="brandon@openrobotics.org">Brandon Ong</maintainer>
+  <author email="brandon@openrobotics.org">Brandon Ong</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>xacro</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>gazebo</depend>
+
+  <export>
+    <architecture_independent />
+  </export>
+</package>

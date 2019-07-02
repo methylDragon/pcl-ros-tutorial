@@ -1,0 +1,22 @@
+<package>
+  <name>pcl_tester</name>
+  <version>0.0.0</version>
+  <description>
+    Throwaway package for testing PCL
+  </description>
+
+  <license>MIT</license>
+  <author>Brandon Ong</author>
+  <maintainer email="brandon@openrobotics.org">Brandon Ong</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>rmf_msgs</build_depend>
+  <run_depend>urdf</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>tf2_ros</run_depend>
+</package>

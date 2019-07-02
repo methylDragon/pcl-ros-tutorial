@@ -1,0 +1,34 @@
+<robot name="simple_box">
+  <link name="my_box">
+    <inertial>
+      <mass value="1.5" />
+      <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" /> 
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+    <visual>
+      <!-- visual origin is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.17 0.17 0.40" />
+      </geometry>
+    </visual>
+    <collision>
+      <!-- collision origin is defined w.r.t. link local coordinate system -->
+      <origin xyz="0 0 0" rpy="0 0 0 " />
+      <geometry>
+        <box size="0.17 0.17 0.40" />
+      </geometry>
+      <friction>
+        <ode>
+          <mu>0.6</mu>
+          <mu2>0.6</mu2>
+        </ode>
+      </friction>
+    </collision>
+  </link>
+  <gazebo reference="my_box">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+</robot>
