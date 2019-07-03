@@ -86,10 +86,10 @@ You should be able to find some nice starter projects in this tutorial's directo
    4.10. [Filters](#4.10)    
    4.11. [Visualisation](#4.11)    
 5. [Putting It Together: Cylinder Segmentation Example Integration with MoveIt!](#5)    
-   5.1. [Includes](#5.1)    
+   5.1. [Includes and Definitions](#5.1)    
    5.2. [Class Definition](#5.2)    
-   5.3. [Class Methods](#5.3)    
-   5.4. [Private Members](#5.4)    
+   5.3. [Private and Protected Members](#5.3)    
+   5.4. [Class Methods](#5.4)    
    5.5. [Main Function](#5.5)    
 
 
@@ -1314,11 +1314,23 @@ Some of the more verbose comments have been shortened for brevity.
 
 You might have to change some of the configuration parameters to make things work. I recommend using rqt_reconfigure with the individual components' ROS nodelets first to tune them first. Then after that you can use those parameters and bake them into the code directly. (Or better yet, eventually do a .yaml file and parse the configurations directly from the ROS parameter server. But that's out the scope of this tutorial.)
 
-Code Source: <https://github.com/ros-planning/moveit_tutorials/blob/kinetic-devel/doc/perception_pipeline/src/cylinder_segment.cpp>
+Original code Source (though I modified it a bit): <https://github.com/ros-planning/moveit_tutorials/blob/kinetic-devel/doc/perception_pipeline/src/cylinder_segment.cpp>
+
+> Code modifications:
+>
+> - Removal of raw pointers
+> - Addition of additional filters
+> - Tuning of some parameters (though you'll have to tune them yourself eventually)
+
+Unfortunately running this tutorial will require some MoveIt! experience. So I will not be putting the code up in a package for demoing.
+
+Here's a gif of it working though! When the cylinder is flat the plane segmentation causes some small issues. (The GIF has been sped up to 150% of original speed.)
+
+![[speed output image]](assets/ezgif-3-3d54ed7f7dd4.gif)
 
 
 
-### 5.1. Includes <a name="5.1"></a>
+### 5.1. Includes and Definitions <a name="5.1"></a>
 [go to top](#top)
 
 
@@ -1328,11 +1340,28 @@ Code Source: <https://github.com/ros-planning/moveit_tutorials/blob/kinetic-deve
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit_msgs/CollisionObject.h>
+
+// Then we'll define a helper struct and a config variable
+
+std::string CYLINDER_NAME = "cylinder";
+
+struct AddCylinderParams
+{
+  /* Radius of the cylinder. */
+  double radius;
+  /* Direction vector towards the z-axis of the cylinder. */
+  double direction_vec[3];
+  /* Center point of the cylinder. */
+  double center_pt[3];
+  /* Height of the cylinder. */
+  double height;
+};
 ```
 
 
@@ -1350,41 +1379,78 @@ public:
   // Constructor
   CylinderSegment()
   {
-    ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("/camera/depth_registered/points", 1, &CylinderSegment::cloudCB, this);
-    ros::spin();
+    sub = nh.subscribe("/camera/depth/points", 1, &CylinderSegment::cloudCB, this);
+    cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("found_cylinder", 10);
+
+    ros::Rate r(25);
+
+    while (ros::ok())
+    {
+      ros::spinOnce();
+      r.sleep();
+    }
   }
 ```
 
 
 
-### 5.3. Class Methods <a name="5.3"></a>
+### 5.3. Private and Protected Members <a name="5.3"></a>
+
 [go to top](#top)
 
+```c++
+protected:
+  ros::NodeHandle nh;
+  ros::Publisher cloud_pub;
+  ros::Subscriber sub;
+};
+```
+
+
+
+
+
+### 5.4. Class Methods <a name="5.4"></a>
+[go to top](#top)
 
 All the following class methods are written within the CylinderSegment class definition
+
+#### **Remove a Cylinder from the MoveIt! Planning Scene**
+
+```c++
+public:
+  void removeCylinder(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface)
+  {
+    std::vector<std::string> object_ids;
+    object_ids.push_back("cylinder");
+
+    planning_scene_interface.removeCollisionObjects(object_ids);
+  }
+```
+
+
+
 #### **Add a Cylinder to the MoveIt! Planning Scene**
 ```c++
-  void addCylinder()
+  void addCylinder(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface, AddCylinderParams& cylinder_params)
   {
-    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-
     // ROS Collision Object Message
     moveit_msgs::CollisionObject collision_object;
-    collision_object.header.frame_id = "camera_rgb_optical_frame";
-    collision_object.id = "cylinder";
+    collision_object.header.frame_id = "pcl_camera_image_link";
+    collision_object.id = CYLINDER_NAME;
 
     // Create the Cylinder
     shape_msgs::SolidPrimitive primitive;
     primitive.type = primitive.CYLINDER;
     primitive.dimensions.resize(2);
-    primitive.dimensions[0] = cylinder_params->height;
-    primitive.dimensions[1] = cylinder_params->radius;
+    primitive.dimensions[0] = cylinder_params.height;
+    primitive.dimensions[1] = cylinder_params.radius;
 
     // Create the Cylinder's Pose
     geometry_msgs::Pose cylinder_pose;
-    Eigen::Vector3d cylinder_z_direction(cylinder_params->direction_vec[0],                                                        cylinder_params->direction_vec[1],
-                                         cylinder_params->direction_vec[2]);
+    Eigen::Vector3d cylinder_z_direction(cylinder_params.direction_vec[0],
+                                         cylinder_params.direction_vec[1],
+                                         cylinder_params.direction_vec[2]);
     Eigen::Vector3d origin_z_direction(0., 0., 1.);
     Eigen::Vector3d axis;
     axis = origin_z_direction.cross(cylinder_z_direction);
@@ -1396,9 +1462,9 @@ All the following class methods are written within the CylinderSegment class def
     cylinder_pose.orientation.w = cos(angle / 2);
 
     // Set the position of the cylinder
-    cylinder_pose.position.x = cylinder_params->center_pt[0];
-    cylinder_pose.position.y = cylinder_params->center_pt[1];
-    cylinder_pose.position.z = cylinder_params->center_pt[2];
+    cylinder_pose.position.x = cylinder_params.center_pt[0];
+    cylinder_pose.position.y = cylinder_params.center_pt[1];
+    cylinder_pose.position.z = cylinder_params.center_pt[2];
 
     // Add cylinder as collision object
     collision_object.primitives.push_back(primitive);
@@ -1410,10 +1476,10 @@ All the following class methods are written within the CylinderSegment class def
 
 
 
-#### **Grab Cylinder Centre Point and Height**
+#### **Grab Cylinder Centre Coordinates and Height**
 
 ```c++
-  void extractLocationHeight(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
+  void extractLocationHeight(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, AddCylinderParams& cylinder_params)
   {
     // Init min and max angle recorders
     double max_angle_y = 0.0;
@@ -1444,12 +1510,12 @@ All the following class methods are written within the CylinderSegment class def
     }
 
     /* Store the center point of cylinder */
-    cylinder_params->center_pt[0] = (highest_point[0] + lowest_point[0]) / 2;
-    cylinder_params->center_pt[1] = (highest_point[1] + lowest_point[1]) / 2;
-    cylinder_params->center_pt[2] = (highest_point[2] + lowest_point[2]) / 2;
+    cylinder_params.center_pt[0] = (highest_point[0] + lowest_point[0]) / 2;
+    cylinder_params.center_pt[1] = (highest_point[1] + lowest_point[1]) / 2;
+    cylinder_params.center_pt[2] = (highest_point[2] + lowest_point[2]) / 2;
 
     /* Store the height of cylinder */
-    cylinder_params->height =
+    cylinder_params.height =
         sqrt(pow((lowest_point[0] - highest_point[0]), 2) + pow((lowest_point[1] - highest_point[1]), 2) +
              pow((lowest_point[2] - highest_point[2]), 2));
   }
@@ -1465,7 +1531,7 @@ All the following class methods are written within the CylinderSegment class def
     pcl::PassThrough<pcl::PointXYZRGB> pass;
     pass.setInputCloud(cloud);
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(0.3, 1.1);
+    pass.setFilterLimits(0.26, 1.5);
     pass.filter(*cloud);
   }
 ```
@@ -1482,7 +1548,7 @@ All the following class methods are written within the CylinderSegment class def
     ne.setSearchMethod(tree);
     ne.setInputCloud(cloud);
     // Set the number of k nearest neighbors to use for the feature estimation.
-    ne.setKSearch(50);
+    ne.setKSearch(25);
     ne.compute(*cloud_normals);
   }
 
@@ -1502,16 +1568,22 @@ All the following class methods are written within the CylinderSegment class def
 #### **Planar Surface Removal**
 
 ```c++
-  void removePlaneSurface(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, pcl::PointIndices::Ptr inliers_plane)
+  void removePlaneSurface(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals, pcl::PointIndices::Ptr inliers_plane)
   {
     // Find Plane
-    pcl::SACSegmentation<pcl::PointXYZRGB> segmentor;
+    pcl::SACSegmentationFromNormals<pcl::PointXYZRGB, pcl::Normal> segmentor;
     segmentor.setOptimizeCoefficients(true);
-    segmentor.setModelType(pcl::SACMODEL_PLANE);
+    segmentor.setModelType(pcl::SACMODEL_NORMAL_PLANE);
     segmentor.setMethodType(pcl::SAC_RANSAC);
+
+    Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
+    segmentor.setAxis(axis);
     segmentor.setMaxIterations(1000);
-    segmentor.setDistanceThreshold(0.01);
+    segmentor.setDistanceThreshold(0.155);
+    segmentor.setEpsAngle(0.09);
+    segmentor.setNormalDistanceWeight(0.1);
     segmentor.setInputCloud(cloud);
+    segmentor.setInputNormals(cloud_normals);
 
     // Output plane
     pcl::ModelCoefficients::Ptr coefficients_plane(new pcl::ModelCoefficients);
@@ -1521,7 +1593,7 @@ All the following class methods are written within the CylinderSegment class def
     pcl::ExtractIndices<pcl::PointXYZRGB> extract_indices;
     extract_indices.setInputCloud(cloud);
     extract_indices.setIndices(inliers_plane);
-    
+
     /* Remove the planar inliers, extract the rest */
     extract_indices.setNegative(true);
     extract_indices.filter(*cloud);
@@ -1547,15 +1619,15 @@ All the following class methods are written within the CylinderSegment class def
     // run at max 1000 iterations before giving up
     segmentor.setMaxIterations(10000);
     // tolerance for variation from model
-    segmentor.setDistanceThreshold(0.05);
+    segmentor.setDistanceThreshold(0.025);
     // min max values of radius in meters to consider
-    segmentor.setRadiusLimits(0, 1);
+    segmentor.setRadiusLimits(0.01, 0.05);
     segmentor.setInputCloud(cloud);
     segmentor.setInputNormals(cloud_normals);
 
     // Obtain the cylinder inliers and coefficients
     segmentor.segment(*inliers_cylinder, *coefficients_cylinder);
-    
+
     // Extract the cylinder inliers from the input cloud
     pcl::ExtractIndices<pcl::PointXYZRGB> extract;
     extract.setInputCloud(cloud);
@@ -1567,11 +1639,33 @@ All the following class methods are written within the CylinderSegment class def
 
 
 
+#### **Outlier Removal**
+
+```c++
+  void removeOutliers(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
+  {
+    // Create the segmentation object for cylinder segmentation and set all the parameters
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> outlier_filter;
+
+    outlier_filter.setInputCloud(cloud);
+    outlier_filter.setMeanK(10);
+    outlier_filter.setStddevMulThresh(2.5);
+    outlier_filter.filter(*cloud);
+  }
+```
+
+
+
 #### **ROS Cloud Callback Function**
 
 ```c++
   void cloudCB(const sensor_msgs::PointCloud2ConstPtr& input)
   {
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+
+    // Create Param Struct Variable
+    AddCylinderParams cylinder_params;
+
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::fromROSMsg(*input, *cloud);
 
@@ -1585,68 +1679,50 @@ All the following class methods are written within the CylinderSegment class def
     pcl::PointIndices::Ptr inliers_plane(new pcl::PointIndices);
 
     // Remove Plane Surface
-    removePlaneSurface(cloud, inliers_plane);
-    
+    removePlaneSurface(cloud, cloud_normals, inliers_plane);
+
     // Grab normals of non-plane points
     extractNormals(cloud_normals, inliers_plane);
-    
-    // Grab Cylinder  
+
+    // Grab Cylinder
     pcl::ModelCoefficients::Ptr coefficients_cylinder(new pcl::ModelCoefficients);
     extractCylinder(cloud, coefficients_cylinder, cloud_normals);
-    
-    // Return error if no cylinder found, else process the found cylinder cloud
+
+    // Remove Outliers
+    removeOutliers(cloud);
+
+    // Return error and remove planning scene cylinder if no cylinder found
+    // else process the found cylinder cloud
     if (cloud->points.empty())
     {
-      ROS_ERROR_STREAM_NAMED("cylinder_segment", "Can't find the cylindrical component.");
+      ROS_ERROR_STREAM_NAMED("cylinder_segment", "Can't find the cylinder!");
+      removeCylinder(planning_scene_interface);
       return;
     }
-    if (points_not_found)
+    else
     {
+      sensor_msgs::PointCloud2 cloud_msg;
+      pcl::toROSMsg(*cloud, cloud_msg);
+
+      cloud_pub.publish(cloud_msg);
+
       // Grab the cylinder parameters
-      cylinder_params->radius = coefficients_cylinder->values[6];
-      
+      cylinder_params.radius = coefficients_cylinder->values[6];
+
       /* Store direction vector of z-axis of cylinder. */
-      cylinder_params->direction_vec[0] = coefficients_cylinder->values[3];
-      cylinder_params->direction_vec[1] = coefficients_cylinder->values[4];
-      cylinder_params->direction_vec[2] = coefficients_cylinder->values[5];
-      
-      // Grab Cylinder Centre and Height  
-      extractLocationHeight(cloud);
-    
-      // Add Cylinder to Planning Scene  
-      addCylinder();
-      points_not_found = false;
+      cylinder_params.direction_vec[0] = coefficients_cylinder->values[3];
+      cylinder_params.direction_vec[1] = coefficients_cylinder->values[4];
+      cylinder_params.direction_vec[2] = coefficients_cylinder->values[5];
+
+      // Grab Cylinder Centre and Height
+      extractLocationHeight(cloud, cylinder_params);
+
+      ROS_INFO("Found cylinder!");
+
+      // Add Cylinder to Planning Scene
+      addCylinder(planning_scene_interface, cylinder_params);
     }
   }
-```
-
-
-
-### 5.4. Private Members <a name="5.4"></a>
-[go to top](#top)
-
-
-```c++
-private:
-  // Define Param Struct
-  struct AddCylinderParams
-  {
-    /* Radius of the cylinder. */
-    double radius;
-    /* Direction vector towards the z-axis of the cylinder. */
-    double direction_vec[3];
-    /* Center point of the cylinder. */
-    double center_pt[3];
-    /* Height of the cylinder. */
-    double height;
-  };
-
-
-  // Create Param Struct Variable  
-  AddCylinderParams* cylinder_params;
-
-  bool points_not_found = true;
-};
 ```
 
 
