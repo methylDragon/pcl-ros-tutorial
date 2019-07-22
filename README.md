@@ -1,4 +1,4 @@
-# pcl-reference-with-ros
+# pcl-ros-tutorial
 ---
 
 ![CylinderSegmentation.gif](assets/CylinderSegmentationFast.gif)
