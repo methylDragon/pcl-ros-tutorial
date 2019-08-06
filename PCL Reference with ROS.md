@@ -342,12 +342,12 @@ This saves a lot of coding time if you just need to do some processing on pointc
 
 #### **Nodelet Operation Refresher**
 
-| Nodelet Launch Arg                   | Description                                                  |
-| ------------------------------------ | ------------------------------------------------------------ |
-| load <pkg>/<Type> <manager_name>     | Launch a nodelet on the nodelet manager named <manager_name> |
-| standalone <pkg>/<Type>              | Launch a nodelet in a standalone node                        |
-| unload <nodelet_name> <manager_name> | Unload a nodelet named <nodelet_name> on the nodelet manager named <manager_name> |
-| manager                              | Launch a nodelet manager node                                |
+| Nodelet Launch Arg                    | Description                                                  |
+| ------------------------------------- | ------------------------------------------------------------ |
+| load \<pkg\>/\<type\> <manager_name\> | Launch a nodelet on the nodelet manager named <manager_name> |
+| standalone \<pkg\>/\<type\>           | Launch a nodelet in a standalone node                        |
+| unload <nodelet_name> <manager_name>  | Unload a nodelet named <nodelet_name> on the nodelet manager named <manager_name> |
+| manager                               | Launch a nodelet manager node                                |
 
 > The nodelet names are defined by the `name=""` attribute in the `<node>` tag in the launch XML.
 
